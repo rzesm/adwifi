@@ -1,13 +1,12 @@
 import asyncio
 import json
-import logging
 import sys
 import threading
 
 from dbus_next.constants import BusType
 
+from src.interface.application import Application
 from src.iwd_agent import IwdAgent
-from src.interface.interface import Application
 from src.iwd_client import IwdClient
 from dbus_next.aio.message_bus import MessageBus
 

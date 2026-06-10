@@ -1,13 +1,10 @@
 import asyncio
 from concurrent.futures import Future
-import threading
 
 from dbus_next.errors import DBusError
-from dbus_next.signature import Variant
 
 from typing import Any
 from dbus_next.aio.message_bus import MessageBus
-from dbus_next.constants import BusType
 
 
 IWD_SERVICE = "net.connman.iwd"

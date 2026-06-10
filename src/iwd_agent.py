@@ -1,11 +1,9 @@
 import asyncio
-from typing import Any
 
 from dbus_next.errors import DBusError
 from dbus_next.service import ServiceInterface, method
 
-from src.interface.interface import Application
-from src.log import log
+from src.interface.application import Application
 
 
 IWD_SERVICE = 'net.connman.iwd'

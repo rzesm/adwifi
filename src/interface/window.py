@@ -3,7 +3,7 @@ from concurrent.futures import Future, ThreadPoolExecutor
 import gi
 
 from src.speed_test_client import test_speed
-from src.interface.speed import SpeedPage
+from src.interface.speed_page import SpeedPage
 from src.iwd_client import IwdClient
 from src.interface.networks import NetworkRefresher, NetworksPage
 
@@ -65,8 +65,8 @@ class Window(Adw.ApplicationWindow):
         self.update_networks()
         
     def on_speed_test_end(self, results):
-        print(results)
-        self.speed_page.post_results(results)
+        if results:
+            self.speed_page.post_results(results)
         self.speed_page.reset_button()
 
     def update_networks(self):

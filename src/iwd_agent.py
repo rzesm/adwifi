@@ -44,8 +44,31 @@ class IwdAgent(ServiceInterface):
     @method()
     async def RequestPassphrase(self, path: "o") -> "s": # type: ignore
         password = await self._provider.request_password(self._loop)
-        if password is None:
-            raise DBusError(
-                'net.connman.iwd.Error.Canceled', 
-                'passphrase request cancelled by user'
-            )
+        if password: return password
+        raise DBusError('net.connman.iwd.Error.Canceled', 'Passphrase request cancelled')
+
+    @method()
+    async def RequestUserNameAndPassword(self, network: "o") -> "(ss)": # type: ignore
+        username, password = await self._provider.request_username_password(self._loop)
+        if username and password: return username, password
+        raise DBusError('net.connman.iwd.Error.Canceled', 'Passphrase request cancelled')
+
+    @method()
+    async def RequestUserPassword(self, network: "o", user: "s") -> "s": # type: ignore
+        password = await self._provider.request_password(self._loop, user)
+        if password: return password
+        raise DBusError('net.connman.iwd.Error.Canceled', 'Passphrase request cancelled')
+
+    @method()
+    async def RequestPrivateKeyPassphrase(self, network: "o") -> "s": # type: ignore
+        password = await self._provider.request_password(self._loop)
+        if password: return password
+        raise DBusError('net.connman.iwd.Error.Canceled', 'Passphrase request cancelled')
+
+    @method()
+    def Cancel(self, reason: "s"): # type: ignore
+        pass
+
+    @method()
+    def Release(self):
+        pass

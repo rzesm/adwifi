@@ -1,6 +1,7 @@
 import asyncio
 import gi
 
+from src.interface.username_password_dialog import UsernamePasswordDialog
 from src.interface.password_dialog import PasswordDialog
 from src.interface.window import Window
 
@@ -21,21 +22,52 @@ class Application(Adw.Application):
         self.window = Window(self.iwd_client, self.cache, application=self)
         self.window.present()
         
-    def request_password(self, loop: asyncio.AbstractEventLoop) -> asyncio.Future:
+    def request_password(
+        self, loop: asyncio.AbstractEventLoop, username: str | None = None
+    ) -> asyncio.Future:
         future = loop.create_future()
-        GLib.idle_add(self._prompt_password, future, loop)
+        GLib.idle_add(self._prompt_password, future, loop, username)
         return future
     
-    def _prompt_password(self, future: asyncio.Future, loop: asyncio.AbstractEventLoop):
-        dialog = PasswordDialog()
+    def request_username_password(
+        self, loop: asyncio.AbstractEventLoop
+    ) -> asyncio.Future:
+        future = loop.create_future()
+        GLib.idle_add(self._prompt_username_password, future, loop)
+        return future
+    
+    def _prompt_password(
+        self, future: asyncio.Future, loop: asyncio.AbstractEventLoop, 
+        username: str | None
+    ) -> None:
+        dialog = PasswordDialog(username)
 
         def on_connect(button):
-            password = dialog.get_password_text()
+            password = dialog.get_password()
             loop.call_soon_threadsafe(future.set_result, password)
             dialog.close()
 
         def on_cancel(button):
             loop.call_soon_threadsafe(future.set_result, None)
+            dialog.close()
+
+        dialog.connect_connect_button(on_connect)
+        dialog.connect_cancel_button(on_cancel)
+        dialog.connect("closed", on_cancel)
+        dialog.present(self.window)
+
+    def _prompt_username_password(
+        self, future: asyncio.Future, loop: asyncio.AbstractEventLoop
+    ) -> None:
+        dialog = UsernamePasswordDialog()
+
+        def on_connect(button):
+            username, password = dialog.get_username(), dialog.get_password()
+            loop.call_soon_threadsafe(future.set_result, (username, password))
+            dialog.close()
+
+        def on_cancel(button):
+            loop.call_soon_threadsafe(future.set_result, (None, None))
             dialog.close()
 
         dialog.connect_connect_button(on_connect)

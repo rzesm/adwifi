@@ -37,11 +37,21 @@ class SpeedPage(Gtk.Box):
         self.start_button.connect("clicked", self._on_start_clicked)
         self.start_stack.add_child(self.start_button)
 
-        self.start_spinner = Adw.Spinner()
-        self.start_spinner.set_margin_top(10)
-        self.start_spinner.set_margin_bottom(10)
-        self.start_stack.add_child(self.start_spinner)
+
+        self.start_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        self.start_box.set_halign(Gtk.Align.CENTER)
+
+        start_spinner = Adw.Spinner()
+        start_spinner.set_margin_start(10)
+        start_spinner.set_margin_end(10)
+        self.start_box.append(start_spinner)
         
+        start_label = Gtk.Label(label="Testing...")
+        start_label.add_css_class('dim-label')
+        self.start_box.append(start_label)
+
+        self.start_stack.add_child(self.start_box)
+
         self.append(self.start_stack)
         
     def post_results(self, results: dict) -> None:
@@ -62,7 +72,7 @@ class SpeedPage(Gtk.Box):
         
     def _on_start_clicked(self, _) -> None:
         if self.start_callback:
-            self.start_stack.set_visible_child(self.start_spinner)
+            self.start_stack.set_visible_child(self.start_box)
             self.start_callback()
 
     def _create_gauge_column(self, title, unit, color) -> None:

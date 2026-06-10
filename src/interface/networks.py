@@ -42,25 +42,30 @@ class NetworksPage(Adw.PreferencesPage):
         
         # create new rows
         for network in networks:
-            row = Adw.ActionRow()
-            row.set_activatable(True)
-
-            # checmark/spinner status
-            status_stack = create_network_status_stack(network)
-            row.add_prefix(status_stack)
-
-            row.connect("activated", self.on_network_clicked, status_stack, network)
-            
-            # ssid (empty space for spacing)
-            row.add_prefix(Gtk.Label(label=f"{network['ssid']} "))
-            
-            # security
-            security_label = Gtk.Label(label=network['security'].upper())
-            security_label.add_css_class("dim-label")
-            row.add_suffix(security_label)
+            row = self.create_network_row(network)
 
             self.networks_group.add(row)
             self.rows.append(row)
+        
+    def create_network_row(self, network: dict) -> Adw.ActionRow:
+        row = Adw.ActionRow()
+        row.set_activatable(True)
+
+        # checmark/spinner status
+        status_stack = create_network_status_stack(network)
+        row.add_prefix(status_stack)
+
+        row.connect("activated", self.on_network_clicked, status_stack, network)
+        
+        # ssid (empty space for spacing)
+        row.add_prefix(Gtk.Label(label=f"{network['ssid']} "))
+        
+        # security
+        security_label = Gtk.Label(label=network['security'].upper())
+        security_label.add_css_class("dim-label")
+        row.add_suffix(security_label)
+        
+        return row
         
 def create_network_status_stack(network: dict):
     status_stack = Gtk.Stack()

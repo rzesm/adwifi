@@ -85,13 +85,21 @@ class Window(Adw.ApplicationWindow):
         toast = Adw.Toast(title=message)
         self.toast_overlay.add_toast(toast)
         
-    # delegates update callbacks back to the main thread
-    def request_update(self, request: Future, callback):
+    # delegates interface update callbacks back to the main thread
+    def request_update(self, request: Future, callback, toast_errors = True):
         assert callback != None
+
+        def update(future: Future):
+            try:
+                callback(future.result())
+            except Exception as e:
+                if toast_errors: self.toast(str(e))
+                # call the callback without the result anyway
+                callback(None)
 
         def synchronize_callback(future: Future):
             # return 0 to run a one time task
-            GLib.idle_add(lambda: (callback(future.result()), False)[1])
+            GLib.idle_add(update, future)
 
         request.add_done_callback(synchronize_callback)
 

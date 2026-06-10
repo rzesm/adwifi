@@ -12,6 +12,10 @@ from dbus_next.constants import BusType
 
 IWD_SERVICE = "net.connman.iwd"
 
+class IwdError(RuntimeError):
+    def __init__(self, message: str):
+        super().__init__(message)
+
 class IwdClient:
     _bus: MessageBus
     _manager: Any
@@ -98,8 +102,7 @@ class IwdClient:
         try:
             await station_interface.call_disconnect()
         except DBusError as e:
-            #todo
-            print(f"asdasdasd")
+            raise IwdError(e.text)
 
     async def connect_to_network(self, network: dict) -> dict | None:
         introspection = await self._bus.introspect(IWD_SERVICE, network['path'])
@@ -108,7 +111,7 @@ class IwdClient:
         
         try:
             await network_interface.call_connect()
-        except DBusError:
-            return None
+        except DBusError as e:
+            raise IwdError(e.text)
             
         return network

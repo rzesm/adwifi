@@ -37,10 +37,14 @@ class IwdClient:
     def handle(self, request) -> Future:
         return asyncio.run_coroutine_threadsafe(request, self._loop)
         
-    async def get_adapters(self) -> list[str]:
+    async def get_adapters(self) -> list[dict]:
         objects = (await self._manager.call_get_managed_objects()).items()
         return [
-            path for path, interfaces in objects
+            {
+                "path": path,
+                "name": interfaces["net.connman.iwd.Device"]["Name"].value
+            }
+            for path, interfaces in objects
             if "net.connman.iwd.Device" in interfaces
         ]
         

@@ -42,10 +42,12 @@ async def set_up_backend() -> tuple:
     # verify adapters
     adapters = iwd_client.handle(iwd_client.get_adapters()).result()
     if adapters:
-        if cache['selected_adapter'] not in adapters:
-            cache['selected_adapter'] = adapters[0]
+        adapter_paths = [adapter['path'] for adapter in adapters]
+        
+        if cache['selected_adapter'] not in adapter_paths:
+            cache['selected_adapter'] = adapters[0]['path']
     else:
-        raise RuntimeError("No suitable Wi-Fi adapter was found") 
+        raise RuntimeError("No suitable Wi-Fi adapter was found")
     
     return iwd_agent, iwd_client, cache
 

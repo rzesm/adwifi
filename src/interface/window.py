@@ -2,6 +2,7 @@ import asyncio
 from concurrent.futures import Future, ThreadPoolExecutor
 import gi
 
+from src.interface.menu import Menu
 from src.speed_test_client import test_speed
 from src.interface.speed_page import SpeedPage
 from src.iwd_client import IwdClient
@@ -18,18 +19,19 @@ class Window(Adw.ApplicationWindow):
 
         self.set_title("Wi-Fi Manager")
         
-        self.wifi_switch = Gtk.Switch(active=True)
-        self.wifi_switch.set_valign(Gtk.Align.CENTER)
+        self._wifi_switch = Gtk.Switch(active=True)
+        self._wifi_switch.set_valign(Gtk.Align.CENTER)
         
-        self.network_refresher = NetworkRefresher()
-        self.networks_page = NetworksPage(self.network_refresher)
-        self.speed_page = SpeedPage()
+        self._menu = Menu()
+        self._network_refresher = NetworkRefresher()
+        self._networks_page = NetworksPage(self._network_refresher)
+        self._speed_page = SpeedPage()
         
-        self.toast_overlay = create_toast_overlay(
-            create_view_stack(self.networks_page, self.speed_page),
-            self.wifi_switch
+        self._toast_overlay = create_toast_overlay(
+            create_view_stack(self._networks_page, self._speed_page),
+            self._menu, self._wifi_switch
         )
-        self.set_content(self.toast_overlay)
+        self.set_content(self._toast_overlay)
         
     def connect_cache(self, cache: dict):
         self._cache = cache
@@ -39,7 +41,19 @@ class Window(Adw.ApplicationWindow):
 
         self._iwd = iwd_client
 
-        self.wifi_switch.connect("notify::active", lambda switch, _: \
+        # menu actions
+        about_action = Gio.SimpleAction.new("show_about")
+        about_action.connect("activate", self._show_about)
+        self.add_action(about_action)
+
+        # adapter selection menu
+        self._request_update(
+            self._iwd.handle(self._iwd.get_adapters()),
+            self._update_adapters
+        )
+
+        # callbacks
+        self._wifi_switch.connect("notify::active", lambda switch, _: \
             self._request_update(
                 self._iwd.handle(self._iwd.set_powered(
                     self._cache['selected_adapter'], switch.get_active()
@@ -47,22 +61,22 @@ class Window(Adw.ApplicationWindow):
                 self._check_adapter_state
             )
         )
-        self.networks_page.connected_network_callback = \
+        self._networks_page.connected_network_callback = \
             lambda _: self._request_update(
                 self._iwd.handle(self._iwd.disconnect(self._cache['selected_adapter'])),
                 self._on_disconnect
             )
-        self.networks_page.disconnected_network_callback = \
+        self._networks_page.disconnected_network_callback = \
             lambda network: self._request_update(
                 self._iwd.handle(self._iwd.connect_to_network(network)),
                 self._on_connect
             )
 
-        self.network_refresher.refresh_callback = lambda: self._request_update(
+        self._network_refresher.refresh_callback = lambda: self._request_update(
             self._iwd.handle(self._iwd.scan(self._cache['selected_adapter'])),
             self._on_scan_end
         )
-        self.speed_page.start_callback = lambda: self._request_update(
+        self._speed_page.start_callback = lambda: self._request_update(
             ThreadPoolExecutor().submit(asyncio.run, test_speed()),
             self._on_speed_test_end
         )
@@ -72,16 +86,20 @@ class Window(Adw.ApplicationWindow):
         
     def toast(self, message: str):
         toast = Adw.Toast(title=message)
-        self.toast_overlay.add_toast(toast)
+        self._toast_overlay.add_toast(toast)
 
     def _check_adapter_state(self, _):
         self._request_update(
             self._iwd.handle(self._iwd.is_powered(self._cache['selected_adapter'])),
             self._update_wifi_state
         )
+
+    def _on_adapter_changed(self, action, parameter):
+        adapter_path = parameter.get_string()
+        self._cache['selected_adapter'] = adapter_path
         
     def _on_scan_end(self, _):
-        self.network_refresher.reset()
+        self._network_refresher.reset()
         self._update_networks()
         
     def _on_disconnect(self, _):
@@ -92,21 +110,33 @@ class Window(Adw.ApplicationWindow):
         
     def _on_speed_test_end(self, results):
         if results:
-            self.speed_page.post_results(results)
-        self.speed_page.reset_button()
+            self._speed_page.post_results(results)
+        self._speed_page.reset_button()
 
     def _update_networks(self):
         self._request_update(
             self._iwd.handle(
                 self._iwd.get_networks(self._cache['selected_adapter'])
             ),
-            self.networks_page.update_networks
+            self._networks_page.update_networks
         )
         
     def _update_wifi_state(self, state: bool):
-        self.wifi_switch.set_active(state)
-        self.networks_page.set_wifi_state(state)
-        if state: self.network_refresher.on_refresh_clicked(None)
+        self._wifi_switch.set_active(state)
+        self._networks_page.set_wifi_state(state)
+        if state: self._network_refresher.on_refresh_clicked(None)
+        
+    def _update_adapters(self, adapters: list[dict]) -> None:
+        self._menu.update_adapters(adapters)
+
+        # bind selection logic
+        select_adapter_action = Gio.SimpleAction.new_stateful(
+            "select_adapter",
+            GLib.VariantType.new("s"), 
+            GLib.Variant("s", self._cache['selected_adapter'])
+        )
+        select_adapter_action.connect("activate", self._on_adapter_changed)
+        self.add_action(select_adapter_action)
         
     # delegates interface update callbacks back to the main thread
     def _request_update(self, request: Future, callback, toast_errors = True):
@@ -128,15 +158,26 @@ class Window(Adw.ApplicationWindow):
             GLib.idle_add(update, future)
 
         request.add_done_callback(synchronize_callback)
+        
+    def _show_about(self, action, parameter):
+        Adw.AboutDialog(
+            application_name="adwifi",
+            version="0.1.0",
+            developer_name="rzes",
+            website="https://github.com/rzesm/adwifi",
+            issue_url="https://github.com/rzesm/adwifi/issues",
+            application_icon="network-wireless"
+        ).present(self)
 
-def create_toast_overlay(view_stack, wifi_switch):
+def create_toast_overlay(view_stack, menu, wifi_switch):
     toast_overlay = Adw.ToastOverlay()
     
     toolbar_view = Adw.ToolbarView()
 
     header_bar = Adw.HeaderBar()
 
-    menu_button = Gtk.Button(icon_name="open-menu-symbolic")
+    menu_button = Gtk.MenuButton(icon_name="open-menu-symbolic")
+    menu_button.set_menu_model(menu)
     header_bar.pack_start(menu_button)
 
     window_title = Adw.WindowTitle(title="Wi-Fi")

@@ -1,0 +1,17 @@
+# Adwifi
+
+Adwifi is a [libadwaita](https://github.com/GNOME/libadwaita) Wi-Fi management app designed for [veri](https://github.com/rzesm/veri), but suitable for any other Arch Linux setup. It interfaces [iwd](https://wiki.archlinux.org/title/Iwd) directly and doesn't rely on [NetworkManager](https://wiki.archlinux.org/title/NetworkManager), making it ideal for minimal configurations.
+
+![](assets/interface.png)
+
+### Features
+
+- Explicit network adapter selection
+- Support for all standard network security protocols
+- Connection speed tester
+
+![](assets/speed_test.png)
+
+### Installation
+
+working on it c:

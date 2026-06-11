@@ -41,9 +41,29 @@ class IwdClient:
         objects = (await self._manager.call_get_managed_objects()).items()
         return [
             path for path, interfaces in objects
-            if "net.connman.iwd.Station" in interfaces
+            if "net.connman.iwd.Device" in interfaces
         ]
+        
+    async def set_powered(self, adapter_path: str, state: bool) -> None:
+        introspection = await self._bus.introspect(IWD_SERVICE, adapter_path)
+        device_proxy = self._bus.get_proxy_object(IWD_SERVICE, adapter_path, introspection)
+        device_interface: Any = device_proxy.get_interface("net.connman.iwd.Device")
+        
+        try:
+            await device_interface.set_powered(state)
+        except DBusError as e:
+            raise IwdError(e.text)
 
+    async def is_powered(self, device_path: str) -> bool:
+        introspection = await self._bus.introspect(IWD_SERVICE, device_path)
+        device_proxy = self._bus.get_proxy_object(IWD_SERVICE, device_path, introspection)
+        device_interface: Any = device_proxy.get_interface("net.connman.iwd.Device")
+        
+        try:
+            return await device_interface.get_powered()
+        except DBusError as e:
+            raise IwdError(e.text)
+        
     async def scan(self, adapter_path: str) -> None:
         introspection = await self._bus.introspect(IWD_SERVICE, adapter_path)
         adapter_proxy = self._bus.get_proxy_object(IWD_SERVICE, adapter_path, introspection)

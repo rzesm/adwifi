@@ -12,6 +12,10 @@ Adwifi is a [libadwaita](https://github.com/GNOME/libadwaita) Wi-Fi management a
 
 ![](assets/speed_test.png)
 
+### Notice
+
+The project is work in progress and not extensively tested. You probably shouldn't try to install and use this yet.
+
 ### Installation
 
 working on it c:

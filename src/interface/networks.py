@@ -9,9 +9,19 @@ gi.require_version('Adw', '1')
 from gi.repository import Gtk, Adw # type: ignore
 
 
-class NetworksPage(Adw.PreferencesPage):
+class NetworksPage(Gtk.Stack):
     def __init__(self, refresher):
         super().__init__()
+        
+        self.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
+        
+        self.disabled_page = Adw.StatusPage(
+            icon_name="network-wireless-offline-symbolic",
+            title="Wi-Fi disabled"
+        )
+        
+        self.enabled_page = Adw.PreferencesPage()
+        
         self.networks_group = Adw.PreferencesGroup(title="Available networks")
         self.networks_group.set_header_suffix(refresher)
         self.rows = []
@@ -19,7 +29,10 @@ class NetworksPage(Adw.PreferencesPage):
         self.connected_network_callback: Any = None
         self.disconnected_network_callback: Any = None
         
-        self.add(self.networks_group)
+        self.enabled_page.add(self.networks_group)
+        
+        self.add_child(self.enabled_page)
+        self.add_child(self.disabled_page)
         
     def on_network_clicked(
         self, row: Adw.ActionRow, status_stack: Gtk.Stack, network: dict
@@ -31,7 +44,7 @@ class NetworksPage(Adw.PreferencesPage):
             status_stack.set_visible_child_name("spinner")
             self.disconnected_network_callback(network)
 
-    def update(self, networks: list):
+    def update_networks(self, networks: list):
         # remove existing rows
         for row in self.rows:
             self.networks_group.remove(row)
@@ -46,6 +59,9 @@ class NetworksPage(Adw.PreferencesPage):
 
             self.networks_group.add(row)
             self.rows.append(row)
+            
+    def set_wifi_state(self, state: bool):
+        self.set_visible_child(self.enabled_page if state else self.disabled_page)
         
     def create_network_row(self, network: dict) -> Adw.ActionRow:
         row = Adw.ActionRow()
@@ -106,8 +122,8 @@ class NetworkRefresher(Gtk.Stack):
         self.add_child(self.spinner)
         
     def on_refresh_clicked(self, _):
-        self.set_visible_child(self.spinner)
         if self.refresh_callback:
+            self.set_visible_child(self.spinner)
             self.refresh_callback()
             
     def reset(self):

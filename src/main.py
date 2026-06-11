@@ -1,7 +1,9 @@
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 import json
 import sys
 import threading
+from time import sleep
 
 from dbus_next.constants import BusType
 
@@ -10,12 +12,13 @@ from src.iwd_agent import IwdAgent
 from src.iwd_client import IwdClient
 from dbus_next.aio.message_bus import MessageBus
 
+
 async def get_dbus():
     system_bus = MessageBus(bus_type=BusType.SYSTEM)
     await system_bus.connect()
     return system_bus
 
-def main():
+async def set_up_backend() -> tuple:
     # set up iwd interface daemon
     iwd_loop = asyncio.new_event_loop()
 
@@ -42,13 +45,17 @@ def main():
         if cache['selected_adapter'] not in adapters:
             cache['selected_adapter'] = adapters[0]
     else:
-        raise RuntimeError("main.py: no suitable wi-fi adapter was found") 
+        raise RuntimeError("No suitable Wi-Fi adapter was found") 
+    
+    return iwd_agent, iwd_client, cache
+
+def main():
+    # set up backend on another thread
+    future_backend = ThreadPoolExecutor().submit(asyncio.run, set_up_backend())
     
     # launch application
-    application = Application(iwd_client, cache)
-    iwd_agent.connect_provider(application)
+    application = Application(future_backend)
     application.run(sys.argv)
-    #todo prelaunch application for visually faster boot
     
 if __name__ == "__main__":
     main()

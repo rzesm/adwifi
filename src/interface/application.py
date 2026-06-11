@@ -1,4 +1,5 @@
 import asyncio
+from concurrent.futures import Future
 import gi
 
 from src.interface.username_password_dialog import UsernamePasswordDialog
@@ -11,16 +12,25 @@ from gi.repository import Adw, Gio, GLib # type: ignore
 
 
 class Application(Adw.Application):
-    def __init__(self, iwd_client, cache):
+    def __init__(self, future_backend: Future):
         super().__init__(
             application_id="rzes.adwifi", flags=Gio.ApplicationFlags.FLAGS_NONE
         )
-        self.iwd_client = iwd_client
-        self.cache = cache
+        self._future_backend = future_backend
 
     def do_activate(self):
-        self.window = Window(self.iwd_client, self.cache, application=self)
+        self.window = Window(application=self)
         self.window.present()
+        
+        # link (and wait for) backend once the interface has initialised
+        GLib.timeout_add(100, self.connect_backend)
+        
+    def connect_backend(self):
+        iwd_agent, iwd_client, cache = self._future_backend.result()
+
+        self.window.connect_cache(cache)
+        self.window.connect_iwd_client(iwd_client)
+        iwd_agent.connect_provider(self)
         
     def request_password(
         self, loop: asyncio.AbstractEventLoop, username: str | None = None

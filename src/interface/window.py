@@ -13,84 +13,113 @@ from gi.repository import Gtk, Adw, Gio, GLib # type: ignore
 
 
 class Window(Adw.ApplicationWindow):
-    def __init__(self, iwd_client: IwdClient, cache: dict, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
         self.set_title("Wi-Fi Manager")
         
-        self._iwd = iwd_client
-        self._cache = cache
+        self.wifi_switch = Gtk.Switch(active=True)
+        self.wifi_switch.set_valign(Gtk.Align.CENTER)
         
         self.network_refresher = NetworkRefresher()
-        self.network_refresher.refresh_callback = lambda: self.request_update(
-            self._iwd.handle(self._iwd.scan(self._cache['selected_adapter'])),
-            self.on_scan_end
-        )
-
         self.networks_page = NetworksPage(self.network_refresher)
-        self.networks_page.connected_network_callback = \
-            lambda _: self.request_update(
-                self._iwd.handle(self._iwd.disconnect(self._cache['selected_adapter'])),
-                self.on_disconnect
-            )
-        self.networks_page.disconnected_network_callback = \
-            lambda network: self.request_update(
-                self._iwd.handle(self._iwd.connect_to_network(network)),
-                self.on_connect
-            )
-
         self.speed_page = SpeedPage()
-        self.speed_page.start_callback = \
-            lambda: self.request_update(
-                ThreadPoolExecutor().submit(asyncio.run, test_speed()),
-                self.on_speed_test_end
-            )
         
         self.toast_overlay = create_toast_overlay(
-            create_view_stack(self.networks_page, self.speed_page)
+            create_view_stack(self.networks_page, self.speed_page),
+            self.wifi_switch
         )
         self.set_content(self.toast_overlay)
         
-        # begin with a network scan
-        self.network_refresher.on_refresh_clicked(None)
+    def connect_cache(self, cache: dict):
+        self._cache = cache
         
-    def on_scan_end(self, _):
-        self.network_refresher.reset()
-        self.update_networks()
-        
-    def on_disconnect(self, _):
-        self.update_networks()
+    def connect_iwd_client(self, iwd_client: IwdClient):
+        assert self._cache is not None
 
-    def on_connect(self, _):
-        self.update_networks()
-        
-    def on_speed_test_end(self, results):
-        if results:
-            self.speed_page.post_results(results)
-        self.speed_page.reset_button()
+        self._iwd = iwd_client
 
-    def update_networks(self):
-        #todo run this periodically
-        self.request_update(
-            self._iwd.handle(
-                self._iwd.get_networks(self._cache['selected_adapter'])
-            ),
-            self.networks_page.update
+        self.wifi_switch.connect("notify::active", lambda switch, _: \
+            self._request_update(
+                self._iwd.handle(self._iwd.set_powered(
+                    self._cache['selected_adapter'], switch.get_active()
+                )),
+                self._check_adapter_state
+            )
         )
+        self.networks_page.connected_network_callback = \
+            lambda _: self._request_update(
+                self._iwd.handle(self._iwd.disconnect(self._cache['selected_adapter'])),
+                self._on_disconnect
+            )
+        self.networks_page.disconnected_network_callback = \
+            lambda network: self._request_update(
+                self._iwd.handle(self._iwd.connect_to_network(network)),
+                self._on_connect
+            )
+
+        self.network_refresher.refresh_callback = lambda: self._request_update(
+            self._iwd.handle(self._iwd.scan(self._cache['selected_adapter'])),
+            self._on_scan_end
+        )
+        self.speed_page.start_callback = lambda: self._request_update(
+            ThreadPoolExecutor().submit(asyncio.run, test_speed()),
+            self._on_speed_test_end
+        )
+
+        self._update_networks()
+        self._check_adapter_state(None)
         
     def toast(self, message: str):
         toast = Adw.Toast(title=message)
         self.toast_overlay.add_toast(toast)
+
+    def _check_adapter_state(self, _):
+        self._request_update(
+            self._iwd.handle(self._iwd.is_powered(self._cache['selected_adapter'])),
+            self._update_wifi_state
+        )
+        
+    def _on_scan_end(self, _):
+        self.network_refresher.reset()
+        self._update_networks()
+        
+    def _on_disconnect(self, _):
+        self._update_networks()
+
+    def _on_connect(self, _):
+        self._update_networks()
+        
+    def _on_speed_test_end(self, results):
+        if results:
+            self.speed_page.post_results(results)
+        self.speed_page.reset_button()
+
+    def _update_networks(self):
+        self._request_update(
+            self._iwd.handle(
+                self._iwd.get_networks(self._cache['selected_adapter'])
+            ),
+            self.networks_page.update_networks
+        )
+        
+    def _update_wifi_state(self, state: bool):
+        self.wifi_switch.set_active(state)
+        self.networks_page.set_wifi_state(state)
+        if state: self.network_refresher.on_refresh_clicked(None)
         
     # delegates interface update callbacks back to the main thread
-    def request_update(self, request: Future, callback, toast_errors = True):
+    def _request_update(self, request: Future, callback, toast_errors = True):
         assert callback != None
 
         def update(future: Future):
             try:
                 callback(future.result())
             except Exception as e:
-                if toast_errors: self.toast(str(e))
+                string = str(e)
+                # capitalize first letter
+                message = string[0].upper() + string[1:]
+                if toast_errors: self.toast(message)
                 # call the callback without the result anyway
                 callback(None)
 
@@ -100,7 +129,7 @@ class Window(Adw.ApplicationWindow):
 
         request.add_done_callback(synchronize_callback)
 
-def create_toast_overlay(view_stack):
+def create_toast_overlay(view_stack, wifi_switch):
     toast_overlay = Adw.ToastOverlay()
     
     toolbar_view = Adw.ToolbarView()
@@ -113,8 +142,6 @@ def create_toast_overlay(view_stack):
     window_title = Adw.WindowTitle(title="Wi-Fi")
     header_bar.set_title_widget(window_title)
 
-    wifi_switch = Gtk.Switch(active=True)
-    wifi_switch.set_valign(Gtk.Align.CENTER)
     header_bar.pack_end(wifi_switch)
 
     toolbar_view.add_top_bar(header_bar)
@@ -138,7 +165,7 @@ def create_view_stack(networks_page, speed_page):
     view_stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
     view_stack.set_transition_duration(300)
 
-    view_stack.add_titled(networks_page, "wifi_tab", " Networks")
-    view_stack.add_titled(speed_page, "speed_tab", " Speed")
+    view_stack.add_titled(networks_page, "networks_page", " Networks")
+    view_stack.add_titled(speed_page, "speed_page", " Speed")
     
     return view_stack

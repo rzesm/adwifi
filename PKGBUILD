@@ -1,6 +1,6 @@
 _pkgname=adwifi
 pkgname=$_pkgname
-pkgver=0.1.0-alpha
+pkgver=0.1.0
 pkgrel=1
 pkgdesc="A libadwaita Wi-Fi manager backed by iwd"
 arch=('any')

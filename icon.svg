@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <mask id="dot-mask">
+      <circle cx="50" cy="85" r="7.5" fill="#ffffff" />
+      <circle cx="50" cy="82.5" r="5" fill="#000000" />
+    </mask>
+  </defs>
+
+  <style>
+    .wifi-signal {
+      fill: none;
+      stroke: #ffffff;
+      stroke-width: 6.5;
+      stroke-linecap: round;
+    }
+    .wifi-dot {
+      fill: #ffffff;
+    }
+  </style>
+
+  <g transform="translate(-7.5, -4) scale(1.15)">
+    <circle cx="50" cy="85" r="7.5" class="wifi-dot" mask="url(#dot-mask)" />
+
+    <path d="M 38.16 73.16 A 16.75 16.75 0 0 1 61.84 73.16" class="wifi-signal" />
+
+    <path d="M 29.32 64.32 A 29.25 29.25 0 0 1 70.68 64.32" class="wifi-signal" />
+  </g>
+</svg>

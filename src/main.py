@@ -1,6 +1,8 @@
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import json
+import os
+from pathlib import Path
 import sys
 import threading
 
@@ -11,6 +13,13 @@ from src.iwd_agent import IwdAgent
 from src.iwd_client import IwdClient
 from dbus_next.aio.message_bus import MessageBus
 
+
+cache_base = os.environ.get("XDG_CACHE_HOME")
+
+CACHE_DIR = \
+    Path(cache_base) / "adwifi" if cache_base else \
+    Path.home() / ".cache" / "adwifi"
+CACHE_FILE = CACHE_DIR / "cache.json"
 
 async def get_dbus():
     system_bus = MessageBus(bus_type=BusType.SYSTEM)
@@ -64,6 +73,9 @@ def load_cache() -> dict:
 
 def save_cache(cache: dict):
     try:
+        # create cache directory
+        CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
+
         with open("cache.json", 'w') as cache_file:
             json.dump(cache, cache_file)
     except Exception:

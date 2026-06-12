@@ -3,7 +3,7 @@ import asyncio
 from dbus_next.errors import DBusError
 from dbus_next.service import ServiceInterface, method
 
-from src.interface.application import Application
+from adwifi.interface.application import Application
 
 
 IWD_SERVICE = 'net.connman.iwd'

@@ -3,7 +3,7 @@ import subprocess
 from unittest.mock import patch, MagicMock
 import pytest
 
-from src.speed_test_client import run_speed_test, SpeedTestError
+from adwifi.speed_test_client import run_speed_test
 
 @pytest.mark.asyncio
 async def test_run_speed_test():
@@ -16,7 +16,7 @@ async def test_run_speed_test():
     mock_process = MagicMock(spec=subprocess.CompletedProcess)
     mock_process.stdout = json.dumps(fake_speedtest_data)
 
-    with patch("src.speed_test_client.subprocess.run", return_value=mock_process) as mock_run:
+    with patch("adwifi.speed_test_client.subprocess.run", return_value=mock_process) as mock_run:
         
         result = await run_speed_test()
         

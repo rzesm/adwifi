@@ -8,9 +8,9 @@ import threading
 
 from dbus_next.constants import BusType
 
-from src.interface.application import Application
-from src.iwd_agent import IwdAgent
-from src.iwd_client import IwdClient
+from adwifi.interface.application import Application
+from adwifi.iwd_agent import IwdAgent
+from adwifi.iwd_client import IwdClient
 from dbus_next.aio.message_bus import MessageBus
 
 
@@ -60,7 +60,7 @@ def load_cache() -> dict:
     }
 
     try:
-        with open("cache.json", 'r') as cache_file:
+        with open(CACHE_FILE, 'r') as cache_file:
             cache: dict = json.load(cache_file)
             if not isinstance(cache, dict): raise TypeError()
             
@@ -76,7 +76,7 @@ def save_cache(cache: dict):
         # create cache directory
         CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
 
-        with open("cache.json", 'w') as cache_file:
+        with open(CACHE_FILE, 'w') as cache_file:
             json.dump(cache, cache_file)
     except Exception:
         pass

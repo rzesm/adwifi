@@ -2,9 +2,9 @@ import asyncio
 from concurrent.futures import Future
 import gi
 
-from src.interface.username_password_dialog import UsernamePasswordDialog
-from src.interface.password_dialog import PasswordDialog
-from src.interface.window import Window
+from adwifi.interface.username_password_dialog import UsernamePasswordDialog
+from adwifi.interface.password_dialog import PasswordDialog
+from adwifi.interface.window import Window
 
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')

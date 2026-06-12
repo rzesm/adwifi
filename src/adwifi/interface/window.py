@@ -2,11 +2,11 @@ import asyncio
 from concurrent.futures import Future, ThreadPoolExecutor
 import gi
 
-from src.interface.menu import Menu
-from src.speed_test_client import run_speed_test
-from src.interface.speed_page import SpeedPage
-from src.iwd_client import IwdClient
-from src.interface.networks import NetworkRefresher, NetworksPage
+from adwifi.interface.menu import Menu
+from adwifi.speed_test_client import run_speed_test
+from adwifi.interface.speed_page import SpeedPage
+from adwifi.iwd_client import IwdClient
+from adwifi.interface.networks import NetworkRefresher, NetworksPage
 
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')

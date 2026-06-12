@@ -3,7 +3,6 @@ from concurrent.futures import ThreadPoolExecutor
 import json
 import sys
 import threading
-from time import sleep
 
 from dbus_next.constants import BusType
 
@@ -18,7 +17,7 @@ async def get_dbus():
     await system_bus.connect()
     return system_bus
 
-async def set_up_backend() -> tuple:
+async def set_up_backend(cache: dict) -> tuple:
     # set up iwd interface daemon
     iwd_loop = asyncio.new_event_loop()
 
@@ -28,11 +27,6 @@ async def set_up_backend() -> tuple:
 
     iwd_thread = threading.Thread(target=run_iwd_loop, daemon=True)
     iwd_thread.start()
-
-    # load application cache
-    with open("cache.json", 'r') as cache_file:
-        #todo error handling
-        cache: dict = json.load(cache_file)
     
     # launch iwd interfaces
     bus = asyncio.run_coroutine_threadsafe(get_dbus(), iwd_loop).result()
@@ -51,13 +45,42 @@ async def set_up_backend() -> tuple:
     
     return iwd_agent, iwd_client, cache
 
+def load_cache() -> dict:
+    default_cache = {
+        'selected_adapter': ''
+    }
+
+    try:
+        with open("cache.json", 'r') as cache_file:
+            cache: dict = json.load(cache_file)
+            if not isinstance(cache, dict): raise TypeError()
+            
+            # verify presence of keys
+            cache['selected_adapter']
+            
+            return cache
+    except Exception:
+        return default_cache
+
+def save_cache(cache: dict):
+    try:
+        with open("cache.json", 'w') as cache_file:
+            json.dump(cache, cache_file)
+    except Exception:
+        pass
+
 def main():
+    # load cache
+    cache = load_cache()
+
     # set up backend on another thread
-    future_backend = ThreadPoolExecutor().submit(asyncio.run, set_up_backend())
+    future_backend = ThreadPoolExecutor().submit(asyncio.run, set_up_backend(cache))
     
     # launch application
     application = Application(future_backend)
     application.run(sys.argv)
+
+    save_cache(cache)
     
 if __name__ == "__main__":
     main()

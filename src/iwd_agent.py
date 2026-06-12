@@ -26,8 +26,6 @@ class IwdAgent(ServiceInterface):
             # register the interface in iwd
             await agent_manager.call_register_agent(AGENT_PATH)
             
-            #todo error handling
-            
             return agent
 
         return asyncio.run_coroutine_threadsafe(impl(), loop).result()

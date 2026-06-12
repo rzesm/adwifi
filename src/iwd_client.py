@@ -25,7 +25,6 @@ class IwdClient:
             manager: Any = proxy.get_interface("org.freedesktop.DBus.ObjectManager")
             
             return cls(bus, manager, loop)
-            #todo error handling
 
         return asyncio.run_coroutine_threadsafe(impl(), loop).result()
         

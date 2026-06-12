@@ -6,7 +6,7 @@ class SpeedTestError(RuntimeError):
     def __init__(self, message: str):
         super().__init__(message)
 
-async def test_speed() -> tuple[float, float, float] | None:    
+async def run_speed_test() -> dict:    
     try:
         output_json = subprocess.run(
             f"/usr/bin/speedtest-cli --json --secure", 

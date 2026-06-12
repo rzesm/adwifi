@@ -3,7 +3,7 @@ from concurrent.futures import Future, ThreadPoolExecutor
 import gi
 
 from src.interface.menu import Menu
-from src.speed_test_client import test_speed
+from src.speed_test_client import run_speed_test
 from src.interface.speed_page import SpeedPage
 from src.iwd_client import IwdClient
 from src.interface.networks import NetworkRefresher, NetworksPage
@@ -77,7 +77,7 @@ class Window(Adw.ApplicationWindow):
             self._on_scan_end
         )
         self._speed_page.start_callback = lambda: self._request_update(
-            ThreadPoolExecutor().submit(asyncio.run, test_speed()),
+            ThreadPoolExecutor().submit(asyncio.run, run_speed_test()),
             self._on_speed_test_end
         )
 
@@ -161,7 +161,7 @@ class Window(Adw.ApplicationWindow):
         
     def _show_about(self, action, parameter):
         Adw.AboutDialog(
-            application_name="adwifi",
+            application_name="Adwifi",
             version="0.1.0",
             developer_name="rzes",
             website="https://github.com/rzesm/adwifi",

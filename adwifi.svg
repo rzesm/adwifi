@@ -18,7 +18,7 @@
     }
   </style>
 
-  <g transform="translate(-7.5, -4) scale(1.15)">
+  <g transform="translate(-53.5, -100.1) scale(2.07)">
     <circle cx="50" cy="85" r="7.5" class="wifi-dot" mask="url(#dot-mask)" />
 
     <path d="M 38.16 73.16 A 16.75 16.75 0 0 1 61.84 73.16" class="wifi-signal" />

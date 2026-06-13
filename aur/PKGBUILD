@@ -1,6 +1,6 @@
 _pkgname=adwifi
 pkgname=$_pkgname-git
-pkgver=0.1.0.r30.g8d385c1
+pkgver=0.1.0.r31.g04e51a2
 pkgrel=1
 pkgdesc="A libadwaita Wi-Fi manager backed by iwd"
 arch=('any')
@@ -26,7 +26,8 @@ makedepends=(
 
 provides=("$_pkgname")
 conflicts=("$_pkgname")
-source=("$_pkgname::git+$url.git")
+source=("$_pkgname::git+file://$startdir/..")
+# source=("$_pkgname::git+$url.git")
 sha256sums=('SKIP')
 
 pkgver() {
@@ -42,6 +43,6 @@ build() {
 package() {
     cd "$_pkgname"
     python -m installer --destdir="$pkgdir" dist/*.whl
-    install -Dm644 adwifi.desktop -t "$pkgdir/usr/share/applications/"
-    install -Dm644 adwifi.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/adwifi.svg"
+    install -Dm644 assets/adwifi.desktop -t "$pkgdir/usr/share/applications/"
+    install -Dm644 assets/adwifi.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/adwifi.svg"
 }

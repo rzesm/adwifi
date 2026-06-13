@@ -18,4 +18,12 @@ The project is work in progress and not extensively tested. You probably shouldn
 
 ### Installation
 
-working on it c:
+#### AUR
+Working on it c:
+
+#### Manual
+```
+git clone https://github.com/rzesm/adwifi
+cd adwifi
+makepkg -si
+```

@@ -1,6 +1,6 @@
 _pkgname=adwifi
 pkgname=$_pkgname-git
-pkgver=0.1.0.r31.g04e51a2
+pkgver=0.1.0.r32.ge44e60c
 pkgrel=1
 pkgdesc="A libadwaita Wi-Fi manager backed by iwd"
 arch=('any')
@@ -26,8 +26,8 @@ makedepends=(
 
 provides=("$_pkgname")
 conflicts=("$_pkgname")
-source=("$_pkgname::git+file://$startdir/..")
-# source=("$_pkgname::git+$url.git")
+# source=("$_pkgname::git+file://$startdir/..") # local install
+source=("$_pkgname::git+$url.git") # remote install
 sha256sums=('SKIP')
 
 pkgver() {

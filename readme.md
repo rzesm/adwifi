@@ -14,7 +14,7 @@ Adwifi is a [libadwaita](https://github.com/GNOME/libadwaita) Wi-Fi management a
 
 ### Notice
 
-The project is work in progress and not extensively tested. You probably shouldn't try to install and use this yet.
+The project is work in progress and not extensively tested. I do not advise relying on it as your only Wi-Fi manager.
 
 ### Installation
 

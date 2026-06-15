@@ -88,11 +88,10 @@ class IwdClient:
         properties_interface.on_properties_changed(check_for_scan_end)
         
         try:
-            # ignore the request if already scanning
-            if await station_interface.get_scanning(): return
-
             await station_interface.call_scan()
             await asyncio.wait_for(scan_finished.wait(), timeout=10.0)
+        except DBusError:
+            pass
         finally:
             properties_interface.off_properties_changed(check_for_scan_end)
 

@@ -76,10 +76,8 @@ class Window(Adw.ApplicationWindow):
             self._iwd.handle(self._iwd.scan(self._cache['selected_adapter'])),
             self._on_scan_end
         )
-        self._speed_page.start_callback = lambda: self._request_update(
-            ThreadPoolExecutor().submit(asyncio.run, run_speed_test()),
-            self._on_speed_test_end
-        )
+        self._speed_page.start_callback = lambda: \
+            ThreadPoolExecutor().submit(asyncio.run, run_speed_test(self._on_speed_test_end, self._on_speed_test_update))
 
         self._update_networks()
         self._check_adapter_state(None)
@@ -108,10 +106,11 @@ class Window(Adw.ApplicationWindow):
     def _on_connect(self, _):
         self._update_networks()
         
-    def _on_speed_test_end(self, results):
-        if results:
-            self._speed_page.post_results(results)
+    def _on_speed_test_end(self):
         self._speed_page.reset_button()
+
+    def _on_speed_test_update(self, results):
+        self._speed_page.post_results(results)
 
     def _update_networks(self):
         self._request_update(
@@ -153,11 +152,7 @@ class Window(Adw.ApplicationWindow):
                 # call the callback without the result anyway
                 callback(None)
 
-        def synchronize_callback(future: Future):
-            # return 0 to run a one time task
-            GLib.idle_add(update, future)
-
-        request.add_done_callback(synchronize_callback)
+        request.add_done_callback(lambda future: GLib.idle_add(update, future))
         
     def _show_about(self, action, parameter):
         Adw.AboutDialog(

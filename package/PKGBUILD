@@ -14,7 +14,7 @@ depends=(
     'libadwaita'
     'python-cairo'
     'iwd'
-    'speedtest-cli'
+    'ookla-speedtest-bin'
 )
 
 makedepends=(

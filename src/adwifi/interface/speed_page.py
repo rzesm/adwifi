@@ -55,17 +55,19 @@ class SpeedPage(Gtk.Box):
         self.append(self.start_stack)
         
     def post_results(self, results: dict) -> None:
-        self._update_gauge('ping', results['ping'], 400)
+        if results.get('ping'):
+            self._update_gauge('ping', results['ping'], 400)
 
-        download = results['download'] / 1000 / 1000
-        upload = results['upload'] / 1000 / 1000
+        if results.get('download'):
+            download = results['download']
+            # scale the gauge so that 100mb is halway through and 1000mb is max
+            download_max = download * 0.8 + 200
+            self._update_gauge('download', download, download_max)
         
-        # scale the gauges so that 100mb is halway through and 1000mb is max
-        download_max = download * 0.8 + 200
-        upload_max =  upload * 0.8 + 200
-        
-        self._update_gauge('download', download, download_max)
-        self._update_gauge('upload', upload, upload_max)
+        if results.get('upload'):
+            upload = results['upload']
+            upload_max =  upload * 0.8 + 200
+            self._update_gauge('upload', upload, upload_max)
         
     def reset_button(self) -> None:
         self.start_stack.set_visible_child(self.start_button)

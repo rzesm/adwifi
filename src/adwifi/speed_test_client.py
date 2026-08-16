@@ -13,7 +13,7 @@ class SpeedTestError(RuntimeError):
     def __init__(self, message: str):
         super().__init__(message)
 
-async def process_line(line: str) -> dict | None:
+def process_line(line: str) -> dict | None:
     data = json.loads(line)
     type = data.get('type')
 
@@ -41,7 +41,7 @@ async def run_speed_test(end_callback, update_callback) -> None:
     try:
 
         process = subprocess.Popen(
-            ["speedtest", "--format=jsonl"],
+            ["/usr/bin/speedtest", "--format=jsonl", "--accept-license", "--accept-gdpr"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -52,10 +52,10 @@ async def run_speed_test(end_callback, update_callback) -> None:
         assert process.stdout is not None
         for line in iter(process.stdout.readline, ""):
             line = line.strip()
-            if not line: continue
+            if not line or not line.startswith("{"): continue
 
             try:
-                result = await process_line(line)
+                result = process_line(line)
 
                 if result is not None:
                     GLib.idle_add(update_callback, result)

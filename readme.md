@@ -4,8 +4,6 @@ Adwifi is a [libadwaita](https://github.com/GNOME/libadwaita) Wi-Fi management a
 
 Adwifi was inspired by [Adwaita Bluetooth](https://github.com/ezratweaver/adw-bluetooth/)'s aesthetic.
 
-The project is work in progress and not extensively tested. I do not advise relying on it as your only Wi-Fi manager.
-
 ### Features
 
 - Explicit network adapter selection

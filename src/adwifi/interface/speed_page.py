@@ -30,7 +30,7 @@ class SpeedPage(Gtk.Box):
         self.start_stack = Gtk.Stack()
         self.start_stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
 
-        self.start_button = Gtk.Button(label="Test connection")
+        self.start_button = Gtk.Button(label="Test Connection")
         self.start_button.set_halign(Gtk.Align.CENTER)
         self.start_button.add_css_class("suggested-action")
         self.start_button.add_css_class("pill")

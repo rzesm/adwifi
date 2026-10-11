@@ -18,9 +18,14 @@ Adwifi was inspired by [Adwaita Bluetooth](https://github.com/ezratweaver/adw-bl
 ### Installation
 
 #### AUR
-Working on it c:
+
+Install as an AUR package (example below with [yay](https://github.com/jguer/yay)):
+```
+yay -S adwifi-git
+```
 
 #### Manual
+
 ```
 git clone https://github.com/rzesm/adwifi
 cd adwifi/package
